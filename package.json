@@ -1,0 +1,45 @@
+{
+  "name": "vite-plugin-remove-dirs-from-path",
+  "version": "1.0.0",
+  "description": "A Vite plugin to remove specific directory paths from file outputs during build.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "homepage": "https://myudak.site/projects/vite-plugin-remove-dir",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/myudak/vite-plugin-remove-dirs.git"
+  },
+  "scripts": {
+    "build": "tsup",
+    "release": "pnpm build && changeset version && changeset publish"
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "readme.md"
+  ],
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "build-tools",
+    "html",
+    "path",
+    "plugin",
+    "vite-chrome-extension"
+  ],
+  "author": "hi@myudak.site",
+  "license": "MIT",
+  "dependencies": {
+    "magic-string": "^0.30.8"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.2"
+  },
+  "peerDependencies": {
+    "vite": "^5.1.0"
+  }
+}
