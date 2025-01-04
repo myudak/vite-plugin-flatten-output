@@ -1,24 +1,22 @@
 import type { Plugin } from "vite";
 
 /**
- * Options for the removeDirsFromPathPlugin.
- * @interface RemoveDirsPluginOptions
- * @property {string[]} [removeDirs] - An array of directory paths to remove from the file names.
- * @property {string} [filePattern] - The file pattern to match against.
+ * Options for the FlattenOutput plugin.
+ * @interface FlattenOutputOptions
+ * @property {string[]} removeDirs - An array of directory paths to remove from the file names.
+ * @property {string} filePattern - The file pattern to match against (e.g., ".html").
  */
-interface RemoveDirsPluginOptions {
+interface FlattenOutputOptions {
   removeDirs: string[];
   filePattern: string;
 }
 
 /**
- * Vite plugin to remove specified directories from output file paths.
- * @param {RemoveDirsPluginOptions} options - Options for configuring the plugin.
- * @returns {Plugin} The Vite plugin instance.
+ * A Vite plugin to remove specified directories from output file paths.
+ * @param {FlattenOutputOptions} options - Configuration options for the plugin.
+ * @returns {Plugin} A Vite plugin instance.
  */
-export default function removeDirsFromPath(
-  options: RemoveDirsPluginOptions
-): Plugin {
+export default function flattenOutput(options: FlattenOutputOptions): Plugin {
   const { removeDirs, filePattern } = options;
 
   const dirsPattern = new RegExp(
@@ -26,7 +24,7 @@ export default function removeDirsFromPath(
   );
 
   return {
-    name: "remove-dirs-from-path",
+    name: "vite-plugin-flatten-output",
     enforce: "post",
     generateBundle(_, bundle) {
       for (const outputItem of Object.values(bundle)) {
@@ -37,7 +35,7 @@ export default function removeDirsFromPath(
         ) {
           removeDirs.forEach((removeDir) => {
             outputItem.fileName = outputItem.fileName.replace(
-              removeDir + "/",
+              `${removeDir}/`,
               ""
             );
           });
