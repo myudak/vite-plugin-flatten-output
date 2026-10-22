@@ -33,6 +33,7 @@ jobs:
         with:
           name: compatibility-node-${{ matrix.node }}-vite-${{ matrix.vite }}
           path: .test-results/
+          include-hidden-files: true
 
   windows:
     runs-on: windows-latest

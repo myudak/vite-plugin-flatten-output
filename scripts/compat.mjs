@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,12 +12,11 @@ const arguments_ = process.argv.slice(2);
 const browser = arguments_.includes('--browser');
 const requested = arguments_.filter((argument) => !argument.startsWith('--'));
 const versions = requested.length ? requested : ['5.1.0', '5', '6.0.0', '6', '7.0.0', '7', '8.0.0', '8'];
-const temporary = await mkdtemp(join(tmpdir(), 'flatten-compat-'));
-const npmCli = process.env.npm_execpath?.endsWith('npm-cli.js') ? process.env.npm_execpath : undefined;
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const temporary = await realpath(await mkdtemp(join(tmpdir(), 'flatten-compat-')));
+const npmCli = join(repo, 'node_modules/npm/bin/npm-cli.js');
 async function run(command, args, cwd) {
   try {
-    const result = await exec(command, args, { cwd, maxBuffer: 10 * 1024 * 1024, timeout: 240_000, shell: process.platform === 'win32' && command.endsWith('.cmd'), env: { ...process.env, CI: 'true' } });
+    const result = await exec(command, args, { cwd, maxBuffer: 10 * 1024 * 1024, timeout: 240_000, env: { ...process.env, CI: 'true' } });
     return result.stdout;
   } catch (error) {
     process.stderr.write(error.stdout ?? '');
@@ -25,7 +24,7 @@ async function run(command, args, cwd) {
     throw error;
   }
 }
-const runNpm = (args, cwd) => npmCli ? run(process.execPath, [npmCli, ...args], cwd) : run(npm, args, cwd);
+const runNpm = (args, cwd) => run(process.execPath, [npmCli, ...args], cwd);
 const results = [];
 try {
   process.stdout.write('Building and packing the published package...\n');

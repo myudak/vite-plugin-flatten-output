@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, writeFile, readFile, rm, readdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, readdir, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, extname, sep } from 'node:path';
 import { createServer } from 'node:http';
@@ -17,7 +17,7 @@ export async function writeFiles(root, files) {
 }
 
 export async function project(t, files) {
-  const root = await mkdtemp(join(tmpdir(), 'flatten-test-'));
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'flatten-test-')));
   t.after(() => rm(root, { recursive: true, force: true }));
   await writeFiles(root, files);
   return root;
