@@ -10,7 +10,7 @@ for (const base of ['/', './', '', '/demo/']) {
     await runBuild(root, { inputs: appInputs, base });
     const server = await staticServer(join(root, 'dist'), base);
     t.after(server.close);
-    const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
+    const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHROMIUM_CHANNEL } : {}), ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
     t.after(() => browser.close());
     t.diagnostic(`Chromium ${browser.version()}`);
     const page = await browser.newPage();

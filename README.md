@@ -95,7 +95,7 @@ pnpm test:compat 8 --browser
 
 `pnpm test:compat` uses the pinned npm 11.9 consumer installer (avoiding npm 10 peer-resolution crashes), builds and packs this package, installs the tarball in isolated consumer projects, and runs the same tests there. It also checks ESM/CommonJS Vite config loading, both TypeScript entrypoints, and the published file list. Add `--browser` to include Chromium. Without a version argument it checks `5.1.0`, latest 5, `6.0.0`, latest 6, `7.0.0`, latest 7, `8.0.0`, and latest 8. Exact resolved versions and results are saved in `.test-results/compat.json`.
 
-CI runs that minimum/latest matrix on Node 22.12 and 24, plus Vite 8 on Node 20.19 and a Windows smoke job. Each consumer must pass the build, type, config, and browser checks. Release automation depends on the entire CI workflow succeeding.
+CI runs that minimum/latest matrix on Node 22.12 and 24, plus Vite 8 on Node 20.19 and a Windows smoke job. CI uses the Chrome browser already installed on GitHub runners; local runs use Playwright's Chromium by default. Each consumer must pass the build, type, config, and browser checks. Release automation depends on the entire CI workflow succeeding.
 
 To run the [extension example](example):
 
