@@ -1,19 +1,29 @@
 {
   "manifest_version": 3,
-  "name": "EXAMPLE EXTENSION WITH VITE PLUGIN REMOVE DIRS",
+  "name": "Flatten output example",
   "version": "1.0.0",
-  "description": "",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "description": "Multi-page Vite extension build using vite-plugin-flatten-output",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
   "action": {
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "js": ["./content.js"]
+      "js": [
+        "./content.js"
+      ],
+      "matches": [
+        "https://example.com/*"
+      ]
     }
   ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
-  }
+  },
+  "options_page": "option.html"
 }

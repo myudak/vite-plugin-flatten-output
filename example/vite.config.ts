@@ -1,24 +1,25 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
-import removeDirsFromPath from "vite-plugin-remove-dirs-from-path";
+import { fileURLToPath } from "node:url";
+import flattenOutput from "vite-plugin-flatten-output";
 
 export default defineConfig({
+  base: "./",
   plugins: [
     react(),
-    removeDirsFromPath({
+    flattenOutput({
       removeDirs: ["src/pages/option", "src/pages/popup"],
       filePattern: ".html",
     }),
   ],
 
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: {
-        popup: path.resolve(__dirname, "src/pages/popup/popup.html"),
-        nested: path.resolve(__dirname, "src/pages/option/option.html"),
-        content: path.resolve(__dirname, "src/content.ts"),
-        background: path.resolve(__dirname, "src/background.ts"),
+        popup: fileURLToPath(new URL("./src/pages/popup/popup.html", import.meta.url)),
+        nested: fileURLToPath(new URL("./src/pages/option/option.html", import.meta.url)),
+        content: fileURLToPath(new URL("./src/content.ts", import.meta.url)),
+        background: fileURLToPath(new URL("./src/background.ts", import.meta.url)),
       },
       output: {
         entryFileNames: (chunkInfo) => {

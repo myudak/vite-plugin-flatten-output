@@ -1,21 +1,73 @@
 name: CI
 on:
   push:
-    branches:
-      - "**"
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  compatibility:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.12.0', '24']
+        vite: ['5.1.0', '5', '6.0.0', '6', '7.0.0', '7', '8.0.0', '8']
+        include:
+          - node: '20.19.0'
+            vite: '8'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          version: 9
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-          cache: "pnpm"
-
+          node-version: ${{ matrix.node }}
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+      - run: pnpm typecheck
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:compat ${{ matrix.vite }} --browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compatibility-node-${{ matrix.node }}-vite-${{ matrix.vite }}
+          path: .test-results/
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install chromium
+      - run: pnpm test:compat 8 --browser
+
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm --dir example install --frozen-lockfile
+      - run: pnpm --dir example build
+
+  checks:
+    if: always()
+    needs: [compatibility, windows, example]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          COMPATIBILITY: ${{ needs.compatibility.result }}
+          WINDOWS: ${{ needs.windows.result }}
+          EXAMPLE: ${{ needs.example.result }}
+        run: test "$COMPATIBILITY" = success && test "$WINDOWS" = success && test "$EXAMPLE" = success
