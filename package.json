@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-flatten-output",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Flatten nested HTML build output while preserving asset URLs.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
