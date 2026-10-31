@@ -1,142 +1,112 @@
 # vite-plugin-flatten-output
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+Move nested HTML build output to a shorter path while keeping its relative asset URLs working. Useful for multi-page applications and browser extension popup/options pages.
 
-> **NOTE**: This plugin is particularly useful for multi-page applications or browser extension projects.
-
-`vite-plugin-flatten-output` is a small Vite plugin designed to simplify your build output by removing specified directories from the file paths. It’s perfect for cases where you want a clean and flat folder structure in your final output.
-
----
-
-## 🔧 **Problem**
-
-For example, your source folder structure might look like this:
-
-```
-├── public
-│   ├── manifest.json
-└── src
-    ├── background.ts
-    ├── content.ts
-    └── pages
-        ├── option.html
-        └── popup.html
+```text
+src/pages/popup/popup.html  →  dist/popup.html
+src/pages/option/option.html  →  dist/option.html
 ```
 
-When you build with Vite, the resulting `dist/` folder structure is:
+Supports Vite 5.1+, 6, 7, and 8, including Vite 8's Rolldown build pipeline. Use a Node.js version supported by your Vite version. Development and CI use Node 22.12+ or 24; CI also checks Vite 8 on Node 20.19.
 
-```
-dist
- ├── [...bunch of js files]
- └── src/
-    └── pages
-        ├── option.html
-        └── popup.html
+## Install
+
+```sh
+npm install -D vite-plugin-flatten-output
 ```
 
-### 🛠️ Ideal Output
+## Usage
 
-Using this plugin, the final folder structure will look like this:
+Vite 8:
 
-```
-dist
- ├── [...bunch of js files]
- ├── popup.html
- ├── option.html
-```
+```ts
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import flattenOutput from 'vite-plugin-flatten-output';
 
----
-
-## 🚀 **Installation**
-
-Install the plugin using your favorite package manager:
-
-### npm:
-
-```bash
-npm install vite-plugin-flatten-output --save-dev
-```
-
-### yarn:
-
-```bash
-yarn add vite-plugin-flatten-output --dev
-```
-
-### pnpm:
-
-```bash
-pnpm add vite-plugin-flatten-output --save-dev
-```
-
----
-
-## ⚙️ **Usage**
-
-Add the plugin to your `vite.config.js` (or `vite.config.ts`):
-
-```javascript
-import flattenOutput from "vite-plugin-flatten-output";
-
-export default {
+export default defineConfig({
+  base: './',
   plugins: [
     flattenOutput({
-      removeDirs: ["src/pages/option", "src/pages/popup"], // Specify directories to remove
-      filePattern: ".html", // Match files by pattern (e.g., '.html')
+      removeDirs: ['src/pages/popup', 'src/pages/option'],
     }),
   ],
-};
+  build: {
+    rolldownOptions: {
+      input: {
+        popup: resolve('src/pages/popup/popup.html'),
+        option: resolve('src/pages/option/option.html'),
+      },
+    },
+  },
+});
 ```
 
----
+For Vite 5–7, use `build.rollupOptions` instead of `build.rolldownOptions`.
 
-## 🔍 **Options**
+The generated JavaScript, CSS, and images stay in their Vite output locations. The plugin updates relative URLs in HTML to resolve from its new location, including module scripts, stylesheets, preload links, images, `srcset`, and inline CSS `url()`. It also updates relative links to other HTML files moved in the same bundle. Absolute, root-relative, data, and fragment URLs retain their meaning and are left unchanged. A document's `<base href>` is rebased instead of rebasing every URL under it.
 
-### `removeDirs`
+Only build output is changed. Development server routes stay the same.
 
-- **Type:** `string[]`
-- **Description:** An array of directory paths to remove from the output file paths.
-- **Example:**
-  ```javascript
-  removeDirs: ["src/pages/option", "src/pages/popup"];
-  ```
+## Options
 
-### `filePattern`
+| Option | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `removeDirs` | `string[]` | Required | Literal directory prefixes relative to the output root. |
+| `filePattern` | `string` | `'.html'` | Literal filename suffix; not a regular expression or glob. |
 
-- **Type:** `string`
-- **Default:** `".html"`
-- **Description:** The file extension or pattern to match files for removal.
-- **Example:**
-  ```javascript
-  filePattern: ".html";
-  ```
+Directories with `.` or `+` are matched literally. Leading `./`, trailing slashes, and Windows separators are normalized. The longest matching prefix is removed once; nested directories after that prefix are preserved. An empty array changes nothing. Absolute paths, parent traversal outside the output root, and empty directories are rejected.
 
----
+If two files would have the same destination, or a moved file would overwrite existing bundle output or a copied public file, the build fails with an error naming the conflicting files.
 
-## 🛠️ **Use Cases**
+## Scope and migration
 
-### 1. **Multi-page Applications**
+The existing default import and options object are retained. `filePattern` is now optional, matching the previously documented default.
 
-- Simplify your output structure by flattening HTML files in multi-page setups.
+Non-code assets can be moved with another suffix, such as `.txt`. Relative references in HTML are updated when their destination is also moved. Files copied from `public/` are not renamed or rewritten, so an extension manifest should already reference `popup.html` and `option.html`.
 
-### 2. **Browser Extensions**
+JavaScript chunks, CSS, and sourcemaps cannot safely be flattened by renaming after bundling: their imports, source maps, and hashes can become inconsistent. Matching those files now fails with an actionable error. Configure Vite's `output.entryFileNames`, `chunkFileNames`, or `assetFileNames` instead.
 
-- Clean up build outputs for Chrome/Firefox extensions, making it easier to reference HTML files like `popup.html` or `options.html`.
+The plugin does not rewrite URLs embedded in JavaScript strings, root-relative navigation links to moved pages, external files, or other plugins' custom metadata. Configure those references explicitly.
 
----
+ES modules and CommonJS are both supported. TypeScript declarations require TypeScript 5.3+ so CommonJS consumers resolve Vite's ESM types correctly:
 
-## 📄 **License**
+```js
+import flattenOutput from 'vite-plugin-flatten-output';
+```
 
-This project is licensed under the [MIT License](LICENSE).
+```js
+const flattenOutput = require('vite-plugin-flatten-output');
+```
 
----
+## Development and verification
 
-## 📝 **Contributing**
+```sh
+corepack enable
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm test
+pnpm exec playwright install chromium
+pnpm test:browser
+pnpm test:compat 8 --browser
+```
 
-Feel free to submit issues or pull requests to improve the plugin!
+`pnpm test` runs real Vite builds and regression tests. Browser tests serve the actual output without SPA fallback, open both pages in Chromium, check rendered UI, CSS and images, exercise a dynamic import, and fail on HTTP errors or runtime exceptions.
 
----
+`pnpm test:compat` uses the pinned npm 11.9 consumer installer (avoiding npm 10 peer-resolution crashes), builds and packs this package, installs the tarball in isolated consumer projects, and runs the same tests there. It also checks ESM/CommonJS Vite config loading, both TypeScript entrypoints, and the published file list. Add `--browser` to include Chromium. Without a version argument it checks `5.1.0`, latest 5, `6.0.0`, latest 6, `7.0.0`, latest 7, `8.0.0`, and latest 8. Exact resolved versions and results are saved in `.test-results/compat.json`.
 
-## 📦 **Changelog**
+CI runs that minimum/latest matrix on Node 22.12 and 24, plus Vite 8 on Node 20.19 and a Windows smoke job. CI uses the Chrome browser already installed on GitHub runners; local runs use Playwright's Chromium by default. Each consumer must pass the build, type, config, and browser checks. Release automation depends on the entire CI workflow succeeding.
 
-See the [CHANGELOG](CHANGELOG.md) for details about updates and changes.
+To run the [extension example](example):
+
+```sh
+pnpm build
+pnpm --dir example install --frozen-lockfile
+pnpm --dir example build
+```
+
+See [the test fixtures](tests) and [CI workflow](.github/workflows/main.yml) for the exact checks.
+
+## License
+
+[MIT](LICENSE)

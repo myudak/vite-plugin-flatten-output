@@ -38,3 +38,6 @@ out/
 # Example-specific files (optional, if needed)
 example/node_modules/
 example/dist/
+
+.test-results/
+*.tgz
